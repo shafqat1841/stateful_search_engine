@@ -3,5 +3,7 @@ use stateful_search_engine::run;
 
 
 fn main() {
-    run();
+    if let Err(err) = run(){
+        println!("Error: {}",err)
+    };
 }
