@@ -1,3 +1,7 @@
+
+use stateful_search_engine::run;
+
+
 fn main() {
-    println!("Hello, world!");
+    run();
 }
