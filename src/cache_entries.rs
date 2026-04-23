@@ -18,6 +18,9 @@ impl<'file_buffer> CacheEntry<'file_buffer> {
 
     pub fn insert_result(&mut self, result: Vec<SearchResult<'file_buffer>>) {
         self.values = result;
+    }
+
+    pub fn increase_access_count(&mut self) {
         self.access_count += 1;
     }
 }

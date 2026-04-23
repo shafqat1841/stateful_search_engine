@@ -1,18 +1,14 @@
 use std::str::from_utf8;
 
-use crate::{
-    cache::Cache, cache_entries::CacheEntry, search_result::SearchResult,
-    stateful_search_engine_errors::AllErros,
-};
+use crate::{search_result::SearchResult, stateful_search_engine_errors::AllErros};
 
 pub struct LogSearcher<'file_buffer> {
     bytes: &'file_buffer [u8],
-    cache: Cache<'file_buffer>,
 }
 
 impl<'file_buffer> LogSearcher<'file_buffer> {
-    pub fn new(bytes: &'file_buffer [u8], cache: Cache<'file_buffer>) -> Self {
-        Self { bytes, cache }
+    pub fn new(bytes: &'file_buffer [u8]) -> Self {
+        Self { bytes }
     }
 
     pub fn get_search_result(
@@ -38,11 +34,11 @@ impl<'file_buffer> LogSearcher<'file_buffer> {
         }
     }
 
-    pub fn search(&mut self, query: &'file_buffer str, limit: usize) -> Result<(), AllErros> {
-        if self.cache.entries.contains_key(query) {
-            return Ok(());
-        }
-
+    pub fn search(
+        &mut self,
+        query: &'file_buffer str,
+        limit: usize,
+    ) -> Result<Vec<SearchResult<'file_buffer>>, AllErros> {
         let bytes_split = self.bytes.split(|b| *b == b'\n');
 
         let filter_map_fun = |line_bytes| self.get_search_result(line_bytes, query);
@@ -53,23 +49,6 @@ impl<'file_buffer> LogSearcher<'file_buffer> {
             .filter_map(filter_map_fun)
             .collect();
 
-        let mut cache_entry: CacheEntry<'file_buffer> = CacheEntry::new();
-        cache_entry.insert_result(result);
-
-        self.cache.entries.insert(query, cache_entry);
-
-        Ok(())
-    }
-
-    pub fn get_all_query_entries(
-        &self,
-        query: &'file_buffer str,
-    ) -> Option<&Vec<SearchResult<'file_buffer>>> {
-        let entry: Option<&Vec<SearchResult<'file_buffer>>> = match self.cache.entries.get(query) {
-            None => None,
-            Some(val) => Some(&val.values),
-        };
-
-        entry
+        Ok(result)
     }
 }
