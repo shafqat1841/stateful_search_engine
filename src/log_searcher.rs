@@ -39,6 +39,10 @@ impl<'file_buffer> LogSearcher<'file_buffer> {
     }
 
     pub fn search(&mut self, query: &'file_buffer str, limit: usize) -> Result<(), AllErros> {
+        if self.cache.entries.contains_key(query) {
+            return Ok(());
+        }
+
         let bytes_split = self.bytes.split(|b| *b == b'\n');
 
         let filter_map_fun = |line_bytes| self.get_search_result(line_bytes, query);

@@ -46,8 +46,8 @@ fn search_logic<'file_buffer>(
 
 pub fn run() -> Result<(), AllErros> {
     let path: PathBuf = PathBuf::from("./log_files/access.log");
-    // let query: &str = "302";
-    let query: &str = "sdfasdfsa";
+    let query: &str = "302";
+    // let query: &str = "sdfasdfsa";
     let limit: usize = 1000;
 
     let file_buffer = FileBuffer::new(&path)?;
