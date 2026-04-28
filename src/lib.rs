@@ -12,7 +12,10 @@ use crate::{
     stateful_search_engine_errors::AllErros,
 };
 
-fn show_result<'file_buffer>(query: &str, result: (String, Option<&Vec<SearchResult<'file_buffer>>>)) {
+fn show_result<'file_buffer>(
+    query: &str,
+    result: (String, Option<&Vec<SearchResult<'file_buffer>>>),
+) {
     // match result.1 {
     //     None => {
     //         println!("No result found for this query: {:?}", query);
@@ -39,24 +42,26 @@ fn search_logic<'file_buffer, 'cache>(
     query: String,
     limit: Option<usize>,
 ) -> Result<(), AllErros> {
-    let query_trimmed = query.trim();
-    if cache.check_query(query_trimmed) {
+    if cache.check_query(&query) {
         println!("from cache");
-        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(query_trimmed);
-        show_result(query_trimmed, result);
+        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) =
+            cache.get_result(&query);
+        show_result(&query, result);
         return Ok(());
     }
 
     println!("from file");
     let mut log_searcher: LogSearcher<'file_buffer> = LogSearcher::new(bytes);
 
-    let query_result: Vec<SearchResult<'file_buffer>> = log_searcher.search(query_trimmed, limit)?;
+    let query_result: Vec<SearchResult<'file_buffer>> =
+        log_searcher.search(&query, limit)?;
 
     cache.add_new_query_in_lrc_and_entries(query.clone(), query_result);
 
-    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(query_trimmed);
+    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) =
+        cache.get_result(&query);
 
-    show_result(query_trimmed, result);
+    show_result(&query, result);
 
     Ok(())
 }
@@ -72,17 +77,17 @@ pub fn run() -> Result<(), AllErros> {
     let bytes: &[u8] = file_buffer.get_bytes();
 
     loop {
-  
         let mut query_input = String::new();
-        query_input.clear();
         println!("Enter your query or type q for quiting the program");
         std::io::stdin().read_line(&mut query_input)?;
 
-        if query_input.trim() == "q" {
+        let trimmed = query_input.trim();
+
+        if trimmed == "q" {
             break;
         }
 
-        search_logic(bytes, &mut cache, query_input, limit)?;
+        search_logic(bytes, &mut cache, trimmed.to_string(), limit)?;
     }
 
     Ok(())

@@ -81,40 +81,19 @@ impl<'file_buffer> Cache<'file_buffer> {
     ) {
         let query_clone = trimed_query.clone();
         self.insert_entry(entry_result, query_clone);
-        println!(
-            "file: cache.rs ~ line 119 ~ &self.lru_query : {:?} ",
-            &self.lru_query
-        );
 
         match &self.lru_query {
             None => {
-                let key_value: Option<(&String, &CacheEntry<'file_buffer>)> =
-                    self.entries.get_key_value(&trimed_query);
-                println!("file: cache.rs ~ line 88 ~ key_value : {:?} ", key_value);
-                if let Some(key) = key_value {
-                    println!("file: cache.rs ~ line 93 ~ ifletSome ~ key : {:?} ", key);
-                    self.lru_query = Some(key.0.clone());
-                }
+                self.lru_query = Some(trimed_query);
             }
             Some(val) => {
-                let lru_entry_opt: Option<(&String, &CacheEntry<'_>)> =
-                    self.entries.get_key_value(val);
-                let new_entry_opt: Option<(&String, &CacheEntry<'_>)> =
-                    self.entries.get_key_value(&trimed_query);
+                let lru_entry_opt = self.entries.get(val);
+                let new_entry_opt = self.entries.get(&trimed_query);
 
-                println!(
-                    "file: cache.rs ~ line 104 ~ ifletSome ~ new_entry : {:?} ",
-                    new_entry_opt
-                );
                 if let Some(new_entry) = new_entry_opt {
                     if let Some(lru_entry) = lru_entry_opt {
-                        let new_access_count = new_entry.1.access_count;
-                        let lru_access_count = lru_entry.1.access_count;
-
-                        let res: std::cmp::Ordering = new_access_count.cmp(&lru_access_count);
-
-                        if let std::cmp::Ordering::Less = res {
-                            self.lru_query = Some(new_entry.0.clone());
+                        if new_entry.access_count < lru_entry.access_count {
+                            self.lru_query = Some(trimed_query);
                         }
                     }
                 }
