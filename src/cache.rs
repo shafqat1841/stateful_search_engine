@@ -6,6 +6,7 @@ use crate::{cache_entries::CacheEntry, search_result::SearchResult};
 pub struct Cache<'file_buffer> {
     pub lru_query: Option<String>,
     pub entries: HashMap<String, CacheEntry<'file_buffer>>,
+    pub entries_limit: usize,
 }
 
 impl<'file_buffer> Cache<'file_buffer> {
@@ -15,6 +16,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         Cache {
             entries,
             lru_query: None,
+            entries_limit: 5,
         }
     }
 
@@ -22,25 +24,41 @@ impl<'file_buffer> Cache<'file_buffer> {
         self.entries.contains_key(query)
     }
 
-    pub fn get_query_value(&mut self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
-        let result: Option<&Vec<SearchResult<'file_buffer>>> = match self.entries.get_mut(query) {
+    pub fn update_query_access_count_value(&mut self, query: &str) {
+        if let Some(val) = self.entries.get_mut(query) {
+            val.increase_access_count();
+        }
+    }
+
+    pub fn get_query_value(&self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
+        let result: Option<&Vec<SearchResult<'file_buffer>>> = match self.entries.get(query) {
             None => None,
-            Some(val) => {
-                val.increase_access_count();
-                Some(&val.values)
-            }
+            Some(val) => Some(&val.values),
         };
 
         result
+    }
+
+    pub fn show_access_count(&self) {
+        for (i, kv) in self.entries.iter().enumerate() {
+            println!(
+                "key number {:?} is: {:?} and its access count is: {:?}",
+                i, kv.0, kv.1.access_count
+            )
+        }
     }
 
     pub fn get_result(
         &mut self,
         query: &str,
     ) -> (String, Option<&Vec<SearchResult<'file_buffer>>>) {
+        self.update_query_access_count_value(query);
+
         let lru = self.get_lru();
 
         let result: Option<&Vec<SearchResult<'file_buffer>>> = self.get_query_value(query);
+
+        self.show_access_count();
 
         (lru, result)
     }
@@ -80,6 +98,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         entry_result: Vec<SearchResult<'file_buffer>>,
     ) {
         let query_clone = trimed_query.clone();
+        self.check_and_remove_entries();
         self.insert_entry(entry_result, query_clone);
 
         match &self.lru_query {
@@ -99,5 +118,27 @@ impl<'file_buffer> Cache<'file_buffer> {
                 }
             }
         };
+
+    }
+
+    fn get_cache_length(&self) -> usize {
+        let res =self.entries.len();
+        println!("file: cache.rs ~ line 126 ~ fnget_cache_length ~ res : {} ", res);
+        res
+    }
+
+    pub fn is_entries_limit_reached(&self) -> bool {
+        let res =self.get_cache_length() >= self.entries_limit;
+        println!("file: cache.rs ~ line 132 ~ pubfnis_entries_limit_reached ~ res : {} ", res);
+        res
+    }
+
+    pub fn check_and_remove_entries(&mut self) {
+        if self.is_entries_limit_reached() {
+            if let Some(lru) = &self.lru_query {
+                println!("file: cache.rs ~ line 139 ~ ifletSome ~ lru : {} ", lru);
+                self.entries.remove(lru);
+            }
+        }
     }
 }

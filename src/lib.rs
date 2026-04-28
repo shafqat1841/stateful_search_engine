@@ -44,8 +44,7 @@ fn search_logic<'file_buffer, 'cache>(
 ) -> Result<(), AllErros> {
     if cache.check_query(&query) {
         println!("from cache");
-        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) =
-            cache.get_result(&query);
+        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(&query);
         show_result(&query, result);
         return Ok(());
     }
@@ -53,13 +52,11 @@ fn search_logic<'file_buffer, 'cache>(
     println!("from file");
     let mut log_searcher: LogSearcher<'file_buffer> = LogSearcher::new(bytes);
 
-    let query_result: Vec<SearchResult<'file_buffer>> =
-        log_searcher.search(&query, limit)?;
+    let query_result: Vec<SearchResult<'file_buffer>> = log_searcher.search(&query, limit)?;
 
     cache.add_new_query_in_lrc_and_entries(query.clone(), query_result);
-
-    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) =
-        cache.get_result(&query);
+    
+    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(&query);
 
     show_result(&query, result);
 
