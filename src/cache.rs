@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{cache_entries::CacheEntry, search_result::SearchResult};
+use crate::{
+    cache_entries::CacheEntry, constants::{CACHE_ENTRIES_LIMIT, DEVELOPMENT}, search_result::SearchResult,
+};
 
 #[derive(Debug)]
 pub struct Cache<'file_buffer> {
@@ -16,7 +18,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         Cache {
             entries,
             lru_query: None,
-            entries_limit: 5,
+            entries_limit: CACHE_ENTRIES_LIMIT,
         }
     }
 
@@ -48,31 +50,26 @@ impl<'file_buffer> Cache<'file_buffer> {
         }
     }
 
-    pub fn get_result(
-        &mut self,
-        query: &str,
-    ) -> (String, Option<&Vec<SearchResult<'file_buffer>>>) {
-        self.update_query_access_count_value(query);
-
-        let lru = self.get_lru();
-
+    pub fn get_result(&mut self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
         let result: Option<&Vec<SearchResult<'file_buffer>>> = self.get_query_value(query);
 
-        self.show_access_count();
+        if DEVELOPMENT {
+            self.show_lru_value();
+    
+            self.show_access_count();
+        }
 
-        (lru, result)
+
+        result
     }
 
-    pub fn get_lru(&self) -> String {
-        let val = match &self.lru_query {
-            None => "None".to_string(),
+    pub fn show_lru_value(&self) {
+        match &self.lru_query {
+            None => println!("lru value is: None"),
             Some(val) => {
-                let res = val.clone();
-                res
+                println!("lru value is: {:?}", val);
             }
         };
-
-        val
     }
 
     pub fn create_default_cache_entry(
@@ -92,53 +89,43 @@ impl<'file_buffer> Cache<'file_buffer> {
         self.entries.insert(trimed_query, cache_entry);
     }
 
-    pub fn add_new_query_in_lrc_and_entries(
-        &mut self,
-        trimed_query: String,
-        entry_result: Vec<SearchResult<'file_buffer>>,
-    ) {
-        let query_clone = trimed_query.clone();
-        self.check_and_remove_entries();
-        self.insert_entry(entry_result, query_clone);
-
-        match &self.lru_query {
-            None => {
-                self.lru_query = Some(trimed_query);
-            }
-            Some(val) => {
-                let lru_entry_opt = self.entries.get(val);
-                let new_entry_opt = self.entries.get(&trimed_query);
-
-                if let Some(new_entry) = new_entry_opt {
-                    if let Some(lru_entry) = lru_entry_opt {
-                        if new_entry.access_count < lru_entry.access_count {
-                            self.lru_query = Some(trimed_query);
-                        }
-                    }
-                }
-            }
-        };
-
-    }
-
     fn get_cache_length(&self) -> usize {
-        let res =self.entries.len();
-        println!("file: cache.rs ~ line 126 ~ fnget_cache_length ~ res : {} ", res);
+        let res = self.entries.len();
         res
     }
 
     pub fn is_entries_limit_reached(&self) -> bool {
-        let res =self.get_cache_length() >= self.entries_limit;
-        println!("file: cache.rs ~ line 132 ~ pubfnis_entries_limit_reached ~ res : {} ", res);
+        let res = self.get_cache_length() >= self.entries_limit;
         res
+    }
+
+    pub fn get_new_lru_value(&mut self) {
+        let mut new_lru: Option<(&String, &CacheEntry<'file_buffer>)> = None;
+        for item in self.entries.iter() {
+            let access_count = item.1.access_count;
+
+            if let Some(val) = new_lru {
+                if val.1.access_count > access_count {
+                    new_lru = Some(item)
+                }
+            } else {
+                new_lru = Some(item)
+            }
+        }
+
+        if let Some(val) = new_lru {
+            self.lru_query = Some(val.0.clone())
+        } else {
+            self.lru_query = None
+        }
     }
 
     pub fn check_and_remove_entries(&mut self) {
         if self.is_entries_limit_reached() {
             if let Some(lru) = &self.lru_query {
-                println!("file: cache.rs ~ line 139 ~ ifletSome ~ lru : {} ", lru);
                 self.entries.remove(lru);
             }
+            self.get_new_lru_value();
         }
     }
 }

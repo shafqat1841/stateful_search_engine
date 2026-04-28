@@ -4,19 +4,16 @@ mod file_buffer;
 mod log_searcher;
 mod search_result;
 mod stateful_search_engine_errors;
+mod constants;
 
 use std::path::PathBuf;
 
 use crate::{
-    cache::Cache, file_buffer::FileBuffer, log_searcher::LogSearcher, search_result::SearchResult,
-    stateful_search_engine_errors::AllErros,
+    cache::Cache, constants::DEVELOPMENT, file_buffer::FileBuffer, log_searcher::LogSearcher, search_result::SearchResult, stateful_search_engine_errors::AllErros
 };
 
-fn show_result<'file_buffer>(
-    query: &str,
-    result: (String, Option<&Vec<SearchResult<'file_buffer>>>),
-) {
-    // match result.1 {
+fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
+    // match result {
     //     None => {
     //         println!("No result found for this query: {:?}", query);
     //     }
@@ -31,9 +28,6 @@ fn show_result<'file_buffer>(
     //         }
     //     }
     // }
-
-    let lru = result.0;
-    println!("Least recently used value is: {}", lru);
 }
 
 fn search_logic<'file_buffer, 'cache>(
@@ -43,20 +37,33 @@ fn search_logic<'file_buffer, 'cache>(
     limit: Option<usize>,
 ) -> Result<(), AllErros> {
     if cache.check_query(&query) {
-        println!("from cache");
-        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(&query);
+        if DEVELOPMENT {
+            println!("from cache");
+        }
+
+        cache.update_query_access_count_value(&query);
+        cache.get_new_lru_value();
+        let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
+        
         show_result(&query, result);
-        return Ok(());
     }
 
-    println!("from file");
+    if DEVELOPMENT {
+        println!("from file");
+    }
     let mut log_searcher: LogSearcher<'file_buffer> = LogSearcher::new(bytes);
 
     let query_result: Vec<SearchResult<'file_buffer>> = log_searcher.search(&query, limit)?;
 
-    cache.add_new_query_in_lrc_and_entries(query.clone(), query_result);
-    
-    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(&query);
+    cache.check_and_remove_entries();
+
+    cache.insert_entry(query_result, query.clone());
+
+    cache.update_query_access_count_value(&query);
+
+    cache.get_new_lru_value();
+
+    let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 
     show_result(&query, result);
 
@@ -66,8 +73,10 @@ fn search_logic<'file_buffer, 'cache>(
 pub fn run() -> Result<(), AllErros> {
     // let path: PathBuf = PathBuf::from("./log_files/test_access.log");
     let path: PathBuf = PathBuf::from("./log_files/access.log");
-    let limit: Option<usize> = Some(1000);
-    // let limit: Option<usize> = None;
+    let mut limit: Option<usize> = None;
+    if DEVELOPMENT {
+        limit = Some(1000);
+    }
     let mut cache: Cache = Cache::new();
     let file_buffer = FileBuffer::new(&path)?;
 
