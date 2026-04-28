@@ -13,21 +13,21 @@ use crate::{
 };
 
 fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
-    // match result {
-    //     None => {
-    //         println!("No result found for this query: {:?}", query);
-    //     }
-    //     Some(val) => {
-    //         if val.is_empty() {
-    //             println!("No entries found for this query: {:?}", query);
-    //         } else {
-    //             for search_result in val {
-    //                 let print_value: &SearchResult<'file_buffer> = search_result;
-    //                 println!("{}", print_value)
-    //             }
-    //         }
-    //     }
-    // }
+    match result {
+        None => {
+            println!("No result found for this query: {:?}", query);
+        }
+        Some(val) => {
+            if val.is_empty() {
+                println!("No entries found for this query: {:?}", query);
+            } else {
+                for search_result in val {
+                    let print_value: &SearchResult<'file_buffer> = search_result;
+                    println!("{}", print_value)
+                }
+            }
+        }
+    }
 }
 
 fn search_logic<'file_buffer, 'cache>(
