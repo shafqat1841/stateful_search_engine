@@ -1,15 +1,16 @@
 mod cache;
 mod cache_entries;
+mod constants;
 mod file_buffer;
 mod log_searcher;
 mod search_result;
 mod stateful_search_engine_errors;
-mod constants;
 
 use std::path::PathBuf;
 
 use crate::{
-    cache::Cache, constants::DEVELOPMENT, file_buffer::FileBuffer, log_searcher::LogSearcher, search_result::SearchResult, stateful_search_engine_errors::AllErros
+    cache::Cache, constants::DEVELOPMENT, file_buffer::FileBuffer, log_searcher::LogSearcher,
+    search_result::SearchResult, stateful_search_engine_errors::AllErros,
 };
 
 fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
@@ -44,8 +45,9 @@ fn search_logic<'file_buffer, 'cache>(
         cache.update_query_access_count_value(&query);
         cache.get_new_lru_value();
         let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
-        
+
         show_result(&query, result);
+        return Ok(());
     }
 
     if DEVELOPMENT {
