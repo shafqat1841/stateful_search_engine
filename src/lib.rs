@@ -12,22 +12,25 @@ use crate::{
     stateful_search_engine_errors::AllErros,
 };
 
-fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
-    match result {
-        None => {
-            println!("No result found for this query: {:?}", query);
-        }
-        Some(val) => {
-            if val.is_empty() {
-                println!("No entries found for this query: {:?}", query);
-            } else {
-                for search_result in val {
-                    let print_value: &SearchResult<'file_buffer> = search_result;
-                    println!("{}", print_value)
-                }
-            }
-        }
-    }
+fn show_result<'file_buffer>(query: &str, result: (String, Option<&Vec<SearchResult<'file_buffer>>>)) {
+    // match result.1 {
+    //     None => {
+    //         println!("No result found for this query: {:?}", query);
+    //     }
+    //     Some(val) => {
+    //         if val.is_empty() {
+    //             println!("No entries found for this query: {:?}", query);
+    //         } else {
+    //             for search_result in val {
+    //                 let print_value: &SearchResult<'file_buffer> = search_result;
+    //                 println!("{}", print_value)
+    //             }
+    //         }
+    //     }
+    // }
+
+    let lru = result.0;
+    println!("Least recently used value is: {}", lru);
 }
 
 fn search_logic<'file_buffer, 'cache>(
@@ -39,11 +42,7 @@ fn search_logic<'file_buffer, 'cache>(
     let query_trimmed = query.trim();
     if cache.check_query(query_trimmed) {
         println!("from cache");
-        let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_query_value(query_trimmed);
-        println!(
-            "file: lib.rs ~ line 45 ~ ifcache.check_query ~ result : {:?} ",
-            result
-        );
+        let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(query_trimmed);
         show_result(query_trimmed, result);
         return Ok(());
     }
@@ -53,9 +52,9 @@ fn search_logic<'file_buffer, 'cache>(
 
     let query_result: Vec<SearchResult<'file_buffer>> = log_searcher.search(query_trimmed, limit)?;
 
-    cache.insert_query_result(query.clone(), query_result);
+    cache.add_new_query_in_lrc_and_entries(query.clone(), query_result);
 
-    let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_query_value(query_trimmed);
+    let result: (String, Option<&Vec<SearchResult<'file_buffer>>>) = cache.get_result(query_trimmed);
 
     show_result(query_trimmed, result);
 
