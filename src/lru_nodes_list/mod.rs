@@ -34,13 +34,6 @@ impl LRUNodesList {
         self.lru_nodes_list.len()
     }
 
-    fn insert_initial_node(&mut self, query: String, index: Option<usize>) {
-        let node_slot = NodeSlot::new(query, None, None);
-        self.head = index;
-        self.tail = index;
-        self.lru_nodes_list.push(node_slot);
-    }
-
     fn get_mut_node(&mut self, index: usize) -> Option<&mut NodeSlot> {
         let node: Option<&mut NodeSlot> = self.lru_nodes_list.get_mut(index);
         node
@@ -58,6 +51,13 @@ impl LRUNodesList {
         if let Some(node_slot) = node_slot {
             node_slot.update_previous(update_index);
         }
+    }
+
+    fn insert_initial_node(&mut self, query: String, index: Option<usize>) {
+        let node_slot = NodeSlot::new(query, None, None);
+        self.head = index;
+        self.tail = index;
+        self.lru_nodes_list.push(node_slot);
     }
 
     fn insert_node(&mut self, query: String, index: Option<usize>) {
