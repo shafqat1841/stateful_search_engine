@@ -97,16 +97,16 @@ impl LRUNodesList {
     }
 
     fn update_prev_node(&mut self, prev: usize, next_node_index: Option<usize>) {
-        let prev_node_opt = self.lru_nodes_list.get_mut(prev);
-        if let Some(prev_node_val) = prev_node_opt {
-            prev_node_val.update_next(next_node_index);
+        let node_slot = self.get_mut_node(prev);
+        if let Some(node_slot) = node_slot {
+            node_slot.update_next(next_node_index);
         }
     }
 
     fn update_next_node(&mut self, next: usize, prev_node_index: Option<usize>) {
-        let next_node_opt = self.get_mut_node(next);
-        if let Some(next_node_val) = next_node_opt {
-            next_node_val.update_previous(prev_node_index);
+        let node_slot = self.get_mut_node(next);
+        if let Some(node_slot) = node_slot {
+            node_slot.update_previous(prev_node_index);
         }
     }
 
@@ -130,26 +130,26 @@ impl LRUNodesList {
     }
 
     fn update_current_node_next(&mut self, next: Option<usize>, current_node_index: usize) {
-        let current_node_opt = self.lru_nodes_list.get_mut(current_node_index);
-        if let Some(current_node_val) = current_node_opt {
-            current_node_val.update_next(next);
+        let node_slot = self.get_mut_node(current_node_index);
+        if let Some(node_slot) = node_slot {
+            node_slot.update_next(next);
         }
     }
 
     fn update_current_head_next(&mut self, index: usize) {
         if let Some(head) = self.head {
-            let current_head = self.lru_nodes_list.get_mut(head);
-            if let Some(current_head) = current_head {
-                current_head.update_next(Some(index));
+            let node_slot = self.get_mut_node(head);
+            if let Some(node_slot) = node_slot {
+                node_slot.update_next(Some(index));
             }
         }
     }
 
     fn update_current_node_prev(&mut self, index: usize) {
-        let current_node = self.lru_nodes_list.get_mut(index);
-        if let Some(current_node) = current_node {
-            if let Some(head) = self.head {
-                current_node.update_previous(Some(head));
+        if let Some(head) = self.head {
+            let node_slot = self.get_mut_node(index);
+            if let Some(node_slot) = node_slot {
+                node_slot.update_previous(Some(head));
                 self.head = Some(index);
             }
         }
@@ -170,9 +170,9 @@ impl LRUNodesList {
     }
 
     fn get_tail_node_next_index(&mut self, tail_index: usize) -> Option<usize> {
-        let current_tail = self.get_mut_node(tail_index);
-        if let Some(current_tail) = current_tail {
-            current_tail.get_next()
+        let node_slot = self.get_mut_node(tail_index);
+        if let Some(node_slot) = node_slot {
+            node_slot.get_next()
         } else {
             None
         }
@@ -180,10 +180,10 @@ impl LRUNodesList {
 
     fn make_node_tail(&mut self, node_index: Option<usize>) {
         if let Some(node_index) = node_index {
-            let current_tail = self.lru_nodes_list.get_mut(node_index);
+            let node_slot = self.get_mut_node(node_index);
 
-            if let Some(current_tail) = current_tail {
-                current_tail.update_previous(None);
+            if let Some(node_slot) = node_slot {
+                node_slot.update_previous(None);
             }
         }
     }
