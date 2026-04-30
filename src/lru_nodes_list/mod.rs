@@ -1,6 +1,6 @@
 mod lru_node;
 
-use crate::{cache::cache_entries::CacheEntry, lru_nodes_list::lru_node::LRUNode};
+use crate::{cache::cache_entries::CacheEntry, lru_nodes_list::lru_node::{LRUNode, PrevAndNext}};
 
 #[derive(Debug)]
 pub struct LRUNodesList {
@@ -74,14 +74,13 @@ impl LRUNodesList {
     pub fn get_current_node_prev_and_next(
         &mut self,
         index: usize,
-    ) -> Option<(Option<usize>, Option<usize>)> {
+    ) -> Option<PrevAndNext> {
         let current_node: Option<&mut LRUNode> = self.lru_nodes_list.get_mut(index);
 
         if let Some(current_node) = current_node {
-            let prev = current_node.get_prev();
-            let next = current_node.get_next();
+            let next_and_prev: PrevAndNext = current_node.get_next_and_prev();
 
-            return Some((prev, next));
+            return Some(next_and_prev);
         }
 
         None
@@ -102,24 +101,20 @@ impl LRUNodesList {
     }
 
     pub fn update_current_node_prev_node(&mut self, index: usize) {
-        let prev_and_next = self.get_current_node_prev_and_next(index);
-
+        let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
         if let Some(prev_and_next) = prev_and_next {
-            let (prev_node_index, next_node_index) = prev_and_next;
-            if let Some(prev) = prev_node_index {
-                self.update_prev_node(prev, next_node_index)
+            if let Some(prev) = prev_and_next.prev {
+                self.update_prev_node(prev, prev_and_next.next)
             }
         }
     }
 
     pub fn update_current_node_next_node(&mut self, index: usize) {
-        let prev_and_next = self.get_current_node_prev_and_next(index);
+        let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
 
         if let Some(prev_and_next) = prev_and_next {
-            let (prev_node_index, next_node_index) = prev_and_next;
-
-            if let Some(next) = next_node_index {
-                self.update_next_node(next, prev_node_index)
+            if let Some(next) = prev_and_next.next {
+                self.update_next_node(next, prev_and_next.prev)
             }
         }
     }
@@ -128,7 +123,6 @@ impl LRUNodesList {
         let current_node_opt = self.lru_nodes_list.get_mut(current_node_index);
         if let Some(current_node_val) = current_node_opt {
             current_node_val.update_next(next);
-            // next_node_val.update_previous(prev_node_index);
         }
     }
 
