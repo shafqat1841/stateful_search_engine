@@ -5,6 +5,7 @@ mod file_buffer;
 mod log_searcher;
 mod search_result;
 mod stateful_search_engine_errors;
+mod lru_nodes_list;
 
 use std::path::PathBuf;
 
@@ -14,21 +15,21 @@ use crate::{
 };
 
 fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
-    match result {
-        None => {
-            println!("No result found for this query: {:?}", query);
-        }
-        Some(val) => {
-            if val.is_empty() {
-                println!("No entries found for this query: {:?}", query);
-            } else {
-                for search_result in val {
-                    let print_value: &SearchResult<'file_buffer> = search_result;
-                    println!("{}", print_value)
-                }
-            }
-        }
-    }
+    // match result {
+    //     None => {
+    //         println!("No result found for this query: {:?}", query);
+    //     }
+    //     Some(val) => {
+    //         if val.is_empty() {
+    //             println!("No entries found for this query: {:?}", query);
+    //         } else {
+    //             for search_result in val {
+    //                 let print_value: &SearchResult<'file_buffer> = search_result;
+    //                 println!("{}", print_value)
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 fn search_logic<'file_buffer, 'cache>(
@@ -42,8 +43,7 @@ fn search_logic<'file_buffer, 'cache>(
             println!("from cache");
         }
 
-        cache.update_query_access_count_value(&query);
-        cache.get_new_lru_value();
+        cache.update_nodes(&query);
         let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 
         show_result(&query, result);
@@ -61,9 +61,7 @@ fn search_logic<'file_buffer, 'cache>(
 
     cache.insert_entry(query_result, query.clone());
 
-    cache.update_query_access_count_value(&query);
-
-    cache.get_new_lru_value();
+    cache.insert_new_node(&query);
 
     let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 
