@@ -1,9 +1,8 @@
-mod cache_entries;
+pub mod cache_entries;
+mod entries;
 
-use std::collections::HashMap;
-
-use crate::{
-    cache::cache_entries::CacheEntry,
+pub use crate::{
+    cache::entries::EntriesMap,
     constants::{CACHE_ENTRIES_LIMIT, DEVELOPMENT},
     log_searcher::SearchResult,
     lru_nodes_list::LRUNodesList,
@@ -11,14 +10,14 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Cache<'file_buffer> {
-    pub entries: HashMap<String, CacheEntry<'file_buffer>>,
+    pub entries: EntriesMap<'file_buffer>,
     pub lru_nodes: LRUNodesList,
     pub entries_limit: usize,
 }
 
 impl<'file_buffer> Cache<'file_buffer> {
     pub fn new() -> Self {
-        let entries: HashMap<String, CacheEntry<'file_buffer>> = HashMap::new();
+        let entries = EntriesMap::new();
         let lru_nodes: LRUNodesList = LRUNodesList::new();
         Cache {
             entries,
@@ -28,16 +27,7 @@ impl<'file_buffer> Cache<'file_buffer> {
     }
 
     pub fn check_query(&self, query: &'file_buffer str) -> bool {
-        self.entries.contains_key(query)
-    }
-
-    pub fn get_query_value(&self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
-        let result: Option<&Vec<SearchResult<'file_buffer>>> = match self.entries.get(query) {
-            None => None,
-            Some(val) => Some(&val.values),
-        };
-
-        result
+        self.entries.check_query(query)
     }
 
     pub fn show_access_count(&self) {
@@ -62,7 +52,7 @@ impl<'file_buffer> Cache<'file_buffer> {
     }
 
     pub fn get_result(&mut self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
-        let result: Option<&Vec<SearchResult<'file_buffer>>> = self.get_query_value(query);
+        let result: Option<&Vec<SearchResult<'file_buffer>>> = self.entries.get_query_value(query);
 
         if DEVELOPMENT {
             self.show_access_count();
@@ -71,47 +61,25 @@ impl<'file_buffer> Cache<'file_buffer> {
         result
     }
 
-    pub fn create_cache_entry(
-        &mut self,
-        entry_result: Vec<SearchResult<'file_buffer>>,
-    ) -> CacheEntry<'file_buffer> {
-        let node_index: usize = self.lru_nodes.get_current_index();
-        let cache_entry: CacheEntry<'file_buffer> = CacheEntry::new(entry_result, node_index);
-        cache_entry
-    }
-
     pub fn insert_entry(&mut self, entry_result: Vec<SearchResult<'file_buffer>>, query: String) {
-        let cache_entry = self.create_cache_entry(entry_result);
+        let node_index: usize = self.lru_nodes.get_current_index();
 
-        let trimed_query = query.trim().to_string();
-
-        self.entries.insert(trimed_query, cache_entry);
+        self.entries.insert_entry(entry_result, query, node_index)
     }
 
     pub fn insert_new_node(&mut self, trimed_query: &str) {
-        let entry = self.entries.get(trimed_query);
-        match entry {
-            None => {
-                self.lru_nodes
-                    .insert_new_node(trimed_query.to_string().clone(), None);
-            }
-            Some(val) => {
-                self.lru_nodes
-                    .insert_new_node(trimed_query.to_string().clone(), Some(val.node_index));
-            }
-        }
+        let entry = self.entries.get_entry_ref(trimed_query);
+        self.lru_nodes.insert_entry(trimed_query, entry);
     }
 
     pub fn update_nodes(&mut self, query: &str) {
-        let entry = self.entries.get(query);
+        let entry = self.entries.get_entry_ref(query);
 
-        if let Some(val) = entry {
-            self.lru_nodes.update_nodes(Some(val.node_index));
-        }
+        self.lru_nodes.update_nodes_by_entry(entry);
     }
 
     fn get_cache_length(&self) -> usize {
-        let res = self.entries.len();
+        let res = self.entries.get_entries_len();
         res
     }
 
@@ -123,7 +91,7 @@ impl<'file_buffer> Cache<'file_buffer> {
     pub fn remove_tail(&mut self) {
         let query = self.lru_nodes.remove_tail();
         if let Some(query) = query {
-            self.entries.remove(&query);
+            self.entries.remove_entry(&query);
         }
     }
 

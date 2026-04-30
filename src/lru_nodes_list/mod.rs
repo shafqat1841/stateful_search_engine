@@ -1,6 +1,6 @@
 mod lru_node;
 
-use crate::lru_nodes_list::lru_node::LRUNode;
+use crate::{cache::cache_entries::CacheEntry, lru_nodes_list::lru_node::LRUNode};
 
 #[derive(Debug)]
 pub struct LRUNodesList {
@@ -51,6 +51,23 @@ impl LRUNodesList {
             self.insert_initial_node(query, index);
         } else {
             self.insert_node(query, index);
+        }
+    }
+
+    pub fn insert_entry(&mut self, trimed_query: &str, entry: Option<&CacheEntry<'_>>) {
+        match entry {
+            None => {
+                self.insert_new_node(trimed_query.to_string().clone(), None);
+            }
+            Some(val) => {
+                self.insert_new_node(trimed_query.to_string().clone(), Some(val.node_index));
+            }
+        }
+    }
+
+    pub fn update_nodes_by_entry(&mut self, entry: Option<&CacheEntry<'_>>) {
+        if let Some(val) = entry {
+            self.update_nodes(Some(val.node_index));
         }
     }
 
@@ -196,7 +213,7 @@ impl LRUNodesList {
             let query: Option<String> = self.get_current_tail_key();
             // self.remove_current_tail(tail_index);
             self.make_node_index_tail(next_node_index);
-            return query
+            return query;
         }
 
         None
