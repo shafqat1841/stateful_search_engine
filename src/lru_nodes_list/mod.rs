@@ -4,9 +4,9 @@ use crate::{cache::cache_entries::CacheEntry, lru_nodes_list::lru_node::{LRUNode
 
 #[derive(Debug)]
 pub struct LRUNodesList {
-    pub lru_nodes_list: Vec<LRUNode>,
-    pub head: Option<usize>,
-    pub tail: Option<usize>,
+    lru_nodes_list: Vec<LRUNode>,
+    head: Option<usize>,
+    tail: Option<usize>,
 }
 
 impl LRUNodesList {
@@ -46,7 +46,7 @@ impl LRUNodesList {
         self.lru_nodes_list.push(lru_node);
     }
 
-    pub fn insert_new_node(&mut self, query: String, index: Option<usize>) {
+    fn insert_new_node(&mut self, query: String, index: Option<usize>) {
         if self.lru_nodes_list.is_empty() {
             self.insert_initial_node(query, index);
         } else {
@@ -71,7 +71,7 @@ impl LRUNodesList {
         }
     }
 
-    pub fn get_current_node_prev_and_next(
+    fn get_current_node_prev_and_next(
         &mut self,
         index: usize,
     ) -> Option<PrevAndNext> {
@@ -86,21 +86,21 @@ impl LRUNodesList {
         None
     }
 
-    pub fn update_prev_node(&mut self, prev: usize, next_node_index: Option<usize>) {
+    fn update_prev_node(&mut self, prev: usize, next_node_index: Option<usize>) {
         let prev_node_opt = self.lru_nodes_list.get_mut(prev);
         if let Some(prev_node_val) = prev_node_opt {
             prev_node_val.update_next(next_node_index);
         }
     }
 
-    pub fn update_next_node(&mut self, next: usize, prev_node_index: Option<usize>) {
+    fn update_next_node(&mut self, next: usize, prev_node_index: Option<usize>) {
         let next_node_opt = self.lru_nodes_list.get_mut(next);
         if let Some(next_node_val) = next_node_opt {
             next_node_val.update_previous(prev_node_index);
         }
     }
 
-    pub fn update_current_node_prev_node(&mut self, index: usize) {
+    fn update_current_node_prev_node(&mut self, index: usize) {
         let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
         if let Some(prev_and_next) = prev_and_next {
             if let Some(prev) = prev_and_next.prev {
@@ -109,7 +109,7 @@ impl LRUNodesList {
         }
     }
 
-    pub fn update_current_node_next_node(&mut self, index: usize) {
+    fn update_current_node_next_node(&mut self, index: usize) {
         let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
 
         if let Some(prev_and_next) = prev_and_next {
@@ -119,14 +119,14 @@ impl LRUNodesList {
         }
     }
 
-    pub fn update_current_node_next(&mut self, next: Option<usize>, current_node_index: usize) {
+    fn update_current_node_next(&mut self, next: Option<usize>, current_node_index: usize) {
         let current_node_opt = self.lru_nodes_list.get_mut(current_node_index);
         if let Some(current_node_val) = current_node_opt {
             current_node_val.update_next(next);
         }
     }
 
-    pub fn update_current_head_next(&mut self, index: usize) {
+    fn update_current_head_next(&mut self, index: usize) {
         if let Some(head) = self.head {
             let current_head = self.lru_nodes_list.get_mut(head);
             if let Some(current_head) = current_head {
@@ -135,7 +135,7 @@ impl LRUNodesList {
         }
     }
 
-    pub fn update_current_node_prev(&mut self, index: usize) {
+    fn update_current_node_prev(&mut self, index: usize) {
         let current_node = self.lru_nodes_list.get_mut(index);
         if let Some(current_node) = current_node {
             if let Some(head) = self.head {
@@ -145,13 +145,13 @@ impl LRUNodesList {
         }
     }
 
-    pub fn update_current_node(&mut self, index: usize) {
+    fn update_current_node(&mut self, index: usize) {
         self.update_current_node_next(None, index);
         self.update_current_head_next(index);
         self.update_current_node_prev(index);
     }
 
-    pub fn update_nodes(&mut self, index: Option<usize>) {
+    fn update_nodes(&mut self, index: Option<usize>) {
         if let Some(index) = index {
             self.update_current_node_prev_node(index);
             self.update_current_node_next_node(index);
@@ -159,7 +159,7 @@ impl LRUNodesList {
         }
     }
 
-    pub fn get_tail_node_next_index(&mut self, tail_index: usize) -> Option<usize> {
+    fn get_tail_node_next_index(&mut self, tail_index: usize) -> Option<usize> {
         let current_tail = self.lru_nodes_list.get_mut(tail_index);
         if let Some(current_tail) = current_tail {
             current_tail.get_next()
@@ -168,7 +168,7 @@ impl LRUNodesList {
         }
     }
 
-    pub fn make_node_tail(&mut self, node_index: Option<usize>) {
+    fn make_node_tail(&mut self, node_index: Option<usize>) {
         if let Some(node_index) = node_index {
             let current_tail = self.lru_nodes_list.get_mut(node_index);
 
@@ -178,15 +178,15 @@ impl LRUNodesList {
         }
     }
 
-    pub fn remove_current_tail(&mut self, tail_index: usize) {
+    fn remove_current_tail(&mut self, tail_index: usize) {
         self.lru_nodes_list.remove(tail_index);
     }
 
-    pub fn make_node_index_tail(&mut self, node_index: Option<usize>) {
+    fn make_node_index_tail(&mut self, node_index: Option<usize>) {
         self.tail = node_index;
     }
 
-    pub fn get_current_tail_key(&mut self) -> Option<String> {
+    fn get_current_tail_key(&mut self) -> Option<String> {
         if let Some(tail) = self.tail {
             let tail_node = self.lru_nodes_list.get(tail);
             if let Some(tail_node) = tail_node {
