@@ -1,20 +1,10 @@
-#[derive(Debug)]
-pub struct PrevAndNext {
-    pub prev: Option<usize>,
-    pub next: Option<usize>,
-}
-
-impl PrevAndNext {
-    pub fn new(prev: Option<usize>, next: Option<usize>) -> PrevAndNext {
-        PrevAndNext { next, prev }
-    }
-}
+use crate::lru_nodes_list::prev_and_next::PrevAndNext;
 
 #[derive(Debug)]
 pub struct LRUNode {
     key: String,
     prev: Option<usize>,
-    next: Option<usize>,
+    pub next: Option<usize>,
 }
 
 impl LRUNode {

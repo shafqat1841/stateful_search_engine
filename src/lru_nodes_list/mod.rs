@@ -1,22 +1,30 @@
 mod lru_node;
+mod node_slot;
+mod prev_and_next;
 
-use crate::{cache::cache_entries::CacheEntry, lru_nodes_list::lru_node::{LRUNode, PrevAndNext}};
+use crate::{
+    cache::cache_entries::CacheEntry,
+    lru_nodes_list::{node_slot::NodeSlot, prev_and_next::PrevAndNext},
+};
 
 #[derive(Debug)]
 pub struct LRUNodesList {
-    lru_nodes_list: Vec<LRUNode>,
+    lru_nodes_list: Vec<NodeSlot>,
+    free_node_slot: Option<usize>,
     head: Option<usize>,
     tail: Option<usize>,
 }
 
 impl LRUNodesList {
     pub fn new() -> LRUNodesList {
-        let lru_nodes_list: Vec<LRUNode> = Vec::new();
+        let lru_nodes_list: Vec<NodeSlot> = Vec::new();
+        let free_node_slot = None;
         let head = None;
         let tail = Some(0);
 
         LRUNodesList {
             lru_nodes_list,
+            free_node_slot,
             head,
             tail,
         }
@@ -27,23 +35,28 @@ impl LRUNodesList {
     }
 
     fn insert_initial_node(&mut self, query: String, index: Option<usize>) {
-        let lru_node = LRUNode::new(query, None, None);
+        let node_slot = NodeSlot::new(query, None, None);
         self.head = index;
         self.tail = index;
-        self.lru_nodes_list.push(lru_node);
+        self.lru_nodes_list.push(node_slot);
+    }
+
+    fn get_mut_node(&mut self, index: usize) -> Option<&mut NodeSlot> {
+        let node: Option<&mut NodeSlot> = self.lru_nodes_list.get_mut(index);
+        node
     }
 
     fn insert_node(&mut self, query: String, index: Option<usize>) {
-        if let Some(head) = self.head {
-            let head_node = self.lru_nodes_list.get_mut(head);
-            if let Some(head_node) = head_node {
-                head_node.update_next(index);
+        if let Some(head_index) = self.head {
+            let node = self.get_mut_node(head_index);
+            if let Some(node) = node {
+                node.update_next(index);
             }
         }
 
-        let lru_node = LRUNode::new(query, self.head, None);
+        let node_slot = NodeSlot::new(query, self.head, None);
         self.head = index;
-        self.lru_nodes_list.push(lru_node);
+        self.lru_nodes_list.push(node_slot);
     }
 
     fn insert_new_node(&mut self, query: String, index: Option<usize>) {
@@ -71,16 +84,13 @@ impl LRUNodesList {
         }
     }
 
-    fn get_current_node_prev_and_next(
-        &mut self,
-        index: usize,
-    ) -> Option<PrevAndNext> {
-        let current_node: Option<&mut LRUNode> = self.lru_nodes_list.get_mut(index);
+    fn get_current_node_prev_and_next(&mut self, index: usize) -> Option<PrevAndNext> {
+        let node = self.get_mut_node(index);
 
-        if let Some(current_node) = current_node {
-            let next_and_prev: PrevAndNext = current_node.get_next_and_prev();
+        if let Some(node) = node {
+            let next_and_prev = node.get_next_and_prev();
 
-            return Some(next_and_prev);
+            return next_and_prev;
         }
 
         None
@@ -94,7 +104,7 @@ impl LRUNodesList {
     }
 
     fn update_next_node(&mut self, next: usize, prev_node_index: Option<usize>) {
-        let next_node_opt = self.lru_nodes_list.get_mut(next);
+        let next_node_opt = self.get_mut_node(next);
         if let Some(next_node_val) = next_node_opt {
             next_node_val.update_previous(prev_node_index);
         }
@@ -160,7 +170,7 @@ impl LRUNodesList {
     }
 
     fn get_tail_node_next_index(&mut self, tail_index: usize) -> Option<usize> {
-        let current_tail = self.lru_nodes_list.get_mut(tail_index);
+        let current_tail = self.get_mut_node(tail_index);
         if let Some(current_tail) = current_tail {
             current_tail.get_next()
         } else {
@@ -191,7 +201,7 @@ impl LRUNodesList {
             let tail_node = self.lru_nodes_list.get(tail);
             if let Some(tail_node) = tail_node {
                 let res = tail_node.get_key();
-                Some(res)
+                res
             } else {
                 None
             }
