@@ -1,4 +1,5 @@
-use crate::search_result::SearchResult;
+use crate::log_searcher::SearchResult;
+
 
 #[derive(Debug)]
 pub struct CacheEntry<'file_buffer> {

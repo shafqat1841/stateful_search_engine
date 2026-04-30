@@ -1,6 +1,9 @@
+mod search_result;
+
 use std::str::from_utf8;
 
-use crate::{search_result::SearchResult, stateful_search_engine_errors::AllErros};
+pub use crate::log_searcher::search_result::SearchResult;
+use crate::stateful_search_engine_errors::AllErros;
 
 pub struct LogSearcher<'file_buffer> {
     bytes: &'file_buffer [u8],

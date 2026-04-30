@@ -1,10 +1,12 @@
+mod cache_entries;
+
 use std::collections::HashMap;
 
 use crate::{
-    cache_entries::CacheEntry,
+    cache::cache_entries::CacheEntry,
     constants::{CACHE_ENTRIES_LIMIT, DEVELOPMENT},
+    log_searcher::SearchResult,
     lru_nodes_list::LRUNodesList,
-    search_result::SearchResult,
 };
 
 #[derive(Debug)]

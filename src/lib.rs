@@ -1,17 +1,18 @@
 mod cache;
-mod cache_entries;
 mod constants;
 mod file_buffer;
 mod log_searcher;
-mod search_result;
-mod stateful_search_engine_errors;
 mod lru_nodes_list;
+mod stateful_search_engine_errors;
 
 use std::path::PathBuf;
 
 use crate::{
-    cache::Cache, constants::DEVELOPMENT, file_buffer::FileBuffer, log_searcher::LogSearcher,
-    search_result::SearchResult, stateful_search_engine_errors::AllErros,
+    cache::Cache,
+    constants::DEVELOPMENT,
+    file_buffer::FileBuffer,
+    log_searcher::{LogSearcher, SearchResult},
+    stateful_search_engine_errors::AllErros,
 };
 
 fn show_result<'file_buffer>(query: &str, result: Option<&Vec<SearchResult<'file_buffer>>>) {
