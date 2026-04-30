@@ -148,16 +148,6 @@ impl LRUNodesList {
         }
     }
 
-    pub fn update_current_tail_next_node(&mut self, next_index: Option<usize>) {
-        if let Some(next_index) = next_index {
-            let next_node = self.lru_nodes_list.get_mut(next_index);
-
-            if let Some(next_node) = next_node {
-                next_node.update_previous(None);
-            }
-        }
-    }
-
     pub fn get_tail_node_next_index(&mut self, tail_index: usize) -> Option<usize> {
         let current_tail = self.lru_nodes_list.get_mut(tail_index);
         if let Some(current_tail) = current_tail {
