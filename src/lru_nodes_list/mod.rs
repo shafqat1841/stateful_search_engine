@@ -128,8 +128,8 @@ impl LRUNodesList {
     fn update_current_node_prev_node(&mut self, index: usize) {
         let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
         if let Some(prev_and_next) = prev_and_next {
-            if let Some(prev) = prev_and_next.prev {
-                self.update_node_next(prev, prev_and_next.next)
+            if let Some(prev) = prev_and_next.get_prev() {
+                self.update_node_next(prev, prev_and_next.get_next())
             }
         }
     }
@@ -138,8 +138,8 @@ impl LRUNodesList {
         let prev_and_next: Option<PrevAndNext> = self.get_current_node_prev_and_next(index);
 
         if let Some(prev_and_next) = prev_and_next {
-            if let Some(next) = prev_and_next.next {
-                self.update_node_previous(next, prev_and_next.prev);
+            if let Some(next) = prev_and_next.get_next() {
+                self.update_node_previous(next, prev_and_next.get_prev());
             }
         }
     }

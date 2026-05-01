@@ -3,7 +3,7 @@ use crate::lru_nodes_list::{lru_node::LRUNode, prev_and_next::PrevAndNext};
 #[derive(Debug)]
 pub enum NodeSlot {
     Occupied(LRUNode),
-    Empty,
+    Empty(PrevAndNext),
 }
 
 impl NodeSlot {
@@ -52,12 +52,14 @@ impl NodeSlot {
 
     pub fn get_key(&self) -> Option<String> {
         if let NodeSlot::Occupied(node) = self {
-            return Some(node.get_key())
+            return Some(node.get_key());
         }
         None
     }
 
-    pub fn make_empty(&mut self){
-        *self = NodeSlot::Empty;
+    pub fn make_empty(&mut self) {
+        if let Some(next_prev) = self.get_next_and_prev() {
+            *self = NodeSlot::Empty(next_prev);
+        }
     }
 }
