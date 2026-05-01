@@ -62,4 +62,11 @@ impl NodeSlot {
             *self = NodeSlot::Empty(next_prev);
         }
     }
+    
+    pub fn make_empty_occupied(&mut self, query: String) {
+        if let NodeSlot::Empty(p_n) = self {
+            let new_self = self::NodeSlot::new(query, p_n.get_prev(), p_n.get_next());
+            *self = new_self;
+        }
+    }
 }

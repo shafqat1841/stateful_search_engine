@@ -79,29 +79,37 @@ impl LRUNodesList {
         self.lru_nodes_list.push(node_slot);
     }
 
+    fn is_free_node_slot_and_index_same(&self, index: usize) -> bool {
+        if let Some(free_node_slot) = self.free_node_slot {
+            free_node_slot == index
+        } else {
+            false
+        }
+    }
+
+    fn fill_empty_slot(&mut self, query: String, index: usize) {
+        let empty_node_slot = self.get_mut_node(index);
+        if let Some(empty_node_slot) = empty_node_slot {
+            empty_node_slot.make_empty_occupied(query);
+        }
+
+        self.free_node_slot = None;
+    }
+
     fn insert_node(&mut self, query: String, index: usize) {
         if let Some(head_index) = self.head {
             self.update_node_next(head_index, Some(index));
         }
-
         let node_slot = NodeSlot::new(query, self.head, None);
         self.head = Some(index);
-
-        if self.lru_nodes_list.len() == index {
-            self.lru_nodes_list.push(node_slot);
-        } else {
-            let old_node_slot = self.lru_nodes_list.get_mut(index);
-            if let Some(old_node_slot) = old_node_slot {
-                *old_node_slot = node_slot;
-            }
-
-            self.free_node_slot = None;
-        }
+        self.lru_nodes_list.push(node_slot);
     }
 
     pub fn insert_new_node(&mut self, query: String, index: usize) {
         if self.lru_nodes_list.is_empty() {
             self.insert_initial_node(query, index);
+        } else if self.is_free_node_slot_and_index_same(index) {
+            self.fill_empty_slot(query, index)
         } else {
             self.insert_node(query, index);
         }
@@ -163,11 +171,28 @@ impl LRUNodesList {
         self.head = index;
     }
 
+    fn get_tail_next_index(&mut self, tail: usize) -> Option<usize> {
+        let node = self.get_mut_node(tail);
+        if let Some(node) = node {
+            let next: Option<usize> = node.get_next();
+            return next
+        }
+        None
+    }
+
     fn update_current_node(&mut self, index: usize) {
-        self.update_node_next(index, None);
         self.update_current_head_next(index);
         self.update_current_node_prev(index);
-        self.make_current_index_head(Some(index))
+        
+        self.make_current_index_head(Some(index));
+        
+        if let Some(tail) = self.tail {
+            if index == tail {
+                let new_tail_index = self.get_tail_next_index(tail);
+                self.tail = new_tail_index;
+            }
+        }
+        self.update_node_next(index, None);
     }
 
     fn update_nodes(&mut self, index: Option<usize>) {
@@ -197,7 +222,7 @@ impl LRUNodesList {
         self.free_node_slot = index
     }
 
-    fn remove_current_tail(&mut self, tail_index: usize) {
+    fn empty_current_tail(&mut self, tail_index: usize) {
         let node = self.get_mut_node(tail_index);
         if let Some(node) = node {
             node.make_empty();
@@ -225,11 +250,11 @@ impl LRUNodesList {
 
     pub fn remove_tail(&mut self) -> Option<String> {
         if let Some(tail_index) = self.tail {
-            let next_node_index = self.get_tail_node_next_index(tail_index);
-            self.make_node_tail(next_node_index);
             let query: Option<String> = self.get_current_tail_key();
-            self.remove_current_tail(tail_index);
-            self.make_node_index_tail(next_node_index);
+            // let next_node_index = self.get_tail_node_next_index(tail_index);
+            // self.make_node_tail(next_node_index);
+            self.empty_current_tail(tail_index);
+            // self.make_node_index_tail(next_node_index);
             return query;
         }
 
