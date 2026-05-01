@@ -137,15 +137,19 @@ impl LRUNodesList {
             let node_slot = self.get_mut_node(index);
             if let Some(node_slot) = node_slot {
                 node_slot.update_previous(Some(head));
-                self.head = Some(index);
             }
         }
+    }
+
+    fn make_current_index_head(&mut self, index: Option<usize>) {
+        self.head = index;
     }
 
     fn update_current_node(&mut self, index: usize) {
         self.update_node_next(index, None);
         self.update_current_head_next(index);
         self.update_current_node_prev(index);
+        self.make_current_index_head(Some(index))
     }
 
     fn update_nodes(&mut self, index: Option<usize>) {
@@ -171,8 +175,16 @@ impl LRUNodesList {
         }
     }
 
+    fn make_index_free(&mut self, index: Option<usize>) {
+        self.free_node_slot = index
+    }
+
     fn remove_current_tail(&mut self, tail_index: usize) {
-        self.lru_nodes_list.remove(tail_index);
+        let node = self.get_mut_node(tail_index);
+        if let Some(node) = node {
+            node.make_empty();
+            self.make_index_free(Some(tail_index));
+        }
     }
 
     fn make_node_index_tail(&mut self, node_index: Option<usize>) {
@@ -198,7 +210,7 @@ impl LRUNodesList {
             let next_node_index = self.get_tail_node_next_index(tail_index);
             self.make_node_tail(next_node_index);
             let query: Option<String> = self.get_current_tail_key();
-            // self.remove_current_tail(tail_index);
+            self.remove_current_tail(tail_index);
             self.make_node_index_tail(next_node_index);
             return query;
         }

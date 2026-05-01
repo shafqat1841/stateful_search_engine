@@ -48,4 +48,8 @@ impl NodeSlot {
         }
         None
     }
+
+    pub fn make_empty(&mut self){
+        *self = NodeSlot::Empty;
+    }
 }
