@@ -30,6 +30,21 @@ impl LRUNodesList {
         }
     }
 
+    pub fn debugging_logs(&self) {
+        for item in self.lru_nodes_list.iter().enumerate() {
+            println!(
+                "index: {:?} and key: {:?} and prev: {:?} and next: {:?}",
+                item.0,
+                item.1.get_key(),
+                item.1.get_prev(),
+                item.1.get_next()
+            )
+        }
+        println!("free_node_slot: {:?}", self.free_node_slot);
+        println!("head: {:?}", self.head);
+        println!("tail: {:?}", self.tail);
+    }
+
     pub fn get_current_index(&self) -> usize {
         if let Some(free_node_slot) = self.free_node_slot {
             free_node_slot
@@ -82,7 +97,6 @@ impl LRUNodesList {
 
             self.free_node_slot = None;
         }
-
     }
 
     pub fn insert_new_node(&mut self, query: String, index: usize) {
@@ -125,7 +139,7 @@ impl LRUNodesList {
 
         if let Some(prev_and_next) = prev_and_next {
             if let Some(next) = prev_and_next.next {
-                self.update_node_previous(next, prev_and_next.prev)
+                self.update_node_previous(next, prev_and_next.prev);
             }
         }
     }

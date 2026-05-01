@@ -45,6 +45,11 @@ fn search_logic<'file_buffer, 'cache>(
         }
 
         cache.update_nodes(&query);
+        
+        if DEVELOPMENT {
+            cache.debugging_logs();
+        }
+
         let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 
         show_result(&query, result);
@@ -61,6 +66,10 @@ fn search_logic<'file_buffer, 'cache>(
     cache.check_and_remove_entries();
 
     cache.insert_entry(query_result, query.clone());
+
+    if DEVELOPMENT {
+        cache.debugging_logs();
+    }
 
     let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 

@@ -26,6 +26,10 @@ impl<'file_buffer> Cache<'file_buffer> {
         }
     }
 
+    pub fn debugging_logs(&self){
+        self.lru_nodes.debugging_logs();
+    }
+
     pub fn check_query(&self, query: &'file_buffer str) -> bool {
         self.entries.check_query(query)
     }

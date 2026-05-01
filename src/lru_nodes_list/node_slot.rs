@@ -42,6 +42,14 @@ impl NodeSlot {
         None
     }
 
+    pub fn get_prev(&self) -> Option<usize> {
+        if let NodeSlot::Occupied(node) = self {
+            return node.get_prev();
+        }
+
+        None
+    }
+
     pub fn get_key(&self) -> Option<String> {
         if let NodeSlot::Occupied(node) = self {
             return Some(node.get_key())
