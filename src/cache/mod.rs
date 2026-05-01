@@ -64,12 +64,18 @@ impl<'file_buffer> Cache<'file_buffer> {
     pub fn insert_entry(&mut self, entry_result: Vec<SearchResult<'file_buffer>>, query: String) {
         let node_index: usize = self.lru_nodes.get_current_index();
 
-        self.entries.insert_entry(entry_result, query, node_index)
+        self.entries
+            .insert_entry(entry_result, query.clone(), node_index);
+
+        self.insert_new_node(query);
     }
 
-    pub fn insert_new_node(&mut self, trimed_query: &str) {
-        let entry = self.entries.get_entry_ref(trimed_query);
-        self.lru_nodes.insert_entry(trimed_query, entry);
+    pub fn insert_new_node(&mut self, query: String) {
+        let entry = self.entries.get_entry_ref(&query);
+        if let Some(entry) = entry {
+            self.lru_nodes
+                .insert_new_node(query, entry.node_index);
+        }
     }
 
     pub fn update_nodes(&mut self, query: &str) {

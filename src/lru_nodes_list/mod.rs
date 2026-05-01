@@ -31,7 +31,11 @@ impl LRUNodesList {
     }
 
     pub fn get_current_index(&self) -> usize {
-        self.lru_nodes_list.len()
+        if let Some(free_node_slot) = self.free_node_slot {
+            free_node_slot
+        } else {
+            self.lru_nodes_list.len()
+        }
     }
 
     fn get_mut_node(&mut self, index: usize) -> Option<&mut NodeSlot> {
@@ -39,53 +43,53 @@ impl LRUNodesList {
         node
     }
 
-    fn update_node_next(&mut self, node_index: usize, update_index: Option<usize>) {
+    fn update_node_next(&mut self, node_index: usize, node_next_index: Option<usize>) {
         let node_slot = self.get_mut_node(node_index);
         if let Some(node_slot) = node_slot {
-            node_slot.update_next(update_index);
+            node_slot.update_next(node_next_index);
         }
     }
 
-    fn update_node_previous(&mut self, index: usize, update_index: Option<usize>) {
-        let node_slot = self.get_mut_node(index);
+    fn update_node_previous(&mut self, node_index: usize, node_previousindex: Option<usize>) {
+        let node_slot = self.get_mut_node(node_index);
         if let Some(node_slot) = node_slot {
-            node_slot.update_previous(update_index);
+            node_slot.update_previous(node_previousindex);
         }
     }
 
-    fn insert_initial_node(&mut self, query: String, index: Option<usize>) {
+    fn insert_initial_node(&mut self, query: String, index: usize) {
         let node_slot = NodeSlot::new(query, None, None);
-        self.head = index;
-        self.tail = index;
+        self.head = Some(index);
+        self.tail = Some(index);
         self.lru_nodes_list.push(node_slot);
     }
 
-    fn insert_node(&mut self, query: String, index: Option<usize>) {
+    fn insert_node(&mut self, query: String, index: usize) {
         if let Some(head_index) = self.head {
-            self.update_node_next(head_index, index);
+            self.update_node_next(head_index, Some(index));
         }
 
         let node_slot = NodeSlot::new(query, self.head, None);
-        self.head = index;
-        self.lru_nodes_list.push(node_slot);
+        self.head = Some(index);
+
+        if self.lru_nodes_list.len() == index {
+            self.lru_nodes_list.push(node_slot);
+        } else {
+            let old_node_slot = self.lru_nodes_list.get_mut(index);
+            if let Some(old_node_slot) = old_node_slot {
+                *old_node_slot = node_slot;
+            }
+
+            self.free_node_slot = None;
+        }
+
     }
 
-    fn insert_new_node(&mut self, query: String, index: Option<usize>) {
+    pub fn insert_new_node(&mut self, query: String, index: usize) {
         if self.lru_nodes_list.is_empty() {
             self.insert_initial_node(query, index);
         } else {
             self.insert_node(query, index);
-        }
-    }
-
-    pub fn insert_entry(&mut self, trimed_query: &str, entry: Option<&CacheEntry<'_>>) {
-        match entry {
-            None => {
-                self.insert_new_node(trimed_query.to_string().clone(), None);
-            }
-            Some(val) => {
-                self.insert_new_node(trimed_query.to_string().clone(), Some(val.node_index));
-            }
         }
     }
 

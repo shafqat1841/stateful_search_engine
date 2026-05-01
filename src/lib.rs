@@ -62,8 +62,6 @@ fn search_logic<'file_buffer, 'cache>(
 
     cache.insert_entry(query_result, query.clone());
 
-    cache.insert_new_node(&query);
-
     let result: Option<&Vec<SearchResult<'file_buffer>>> = cache.get_result(&query);
 
     show_result(&query, result);

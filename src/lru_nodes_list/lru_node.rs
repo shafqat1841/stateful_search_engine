@@ -4,7 +4,7 @@ use crate::lru_nodes_list::prev_and_next::PrevAndNext;
 pub struct LRUNode {
     key: String,
     prev: Option<usize>,
-    pub next: Option<usize>,
+    next: Option<usize>,
 }
 
 impl LRUNode {
