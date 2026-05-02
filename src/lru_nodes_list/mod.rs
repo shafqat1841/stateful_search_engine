@@ -117,7 +117,7 @@ impl LRUNodesList {
 
     pub fn update_nodes_by_entry(&mut self, entry: Option<&CacheEntry<'_>>) {
         if let Some(val) = entry {
-            self.update_nodes(Some(val.node_index));
+            self.update_nodes(val.node_index);
         }
     }
 
@@ -195,12 +195,15 @@ impl LRUNodesList {
         self.update_node_next(index, None);
     }
 
-    fn update_nodes(&mut self, index: Option<usize>) {
-        if let Some(index) = index {
-            self.update_current_node_prev_node(index);
-            self.update_current_node_next_node(index);
-            self.update_current_node(index);
+    fn update_nodes(&mut self, index: usize) {
+        if let Some(head) = self.head {
+            if head == index {
+                return;
+            }
         }
+        self.update_current_node_prev_node(index);
+        self.update_current_node_next_node(index);
+        self.update_current_node(index);
     }
 
     fn make_index_free(&mut self, index: Option<usize>) {
