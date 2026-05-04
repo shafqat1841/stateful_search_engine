@@ -26,7 +26,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         }
     }
 
-    pub fn debugging_logs(&self){
+    pub fn debugging_logs(&self) {
         self.lru_nodes.debugging_logs();
     }
 
@@ -77,8 +77,7 @@ impl<'file_buffer> Cache<'file_buffer> {
     pub fn insert_new_node(&mut self, query: String) {
         let entry = self.entries.get_entry_ref(&query);
         if let Some(entry) = entry {
-            self.lru_nodes
-                .insert_new_node(query, entry.node_index);
+            self.lru_nodes.insert_new_node(query, entry.node_index);
         }
     }
 
