@@ -1,6 +1,8 @@
 pub mod cache_entries;
 mod entries;
 
+use std::rc::Rc;
+
 pub use crate::{
     cache::entries::EntriesMap,
     constants::{CACHE_ENTRIES_LIMIT, DEVELOPMENT},
@@ -30,7 +32,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         self.lru_nodes.debugging_logs();
     }
 
-    pub fn check_query(&self, query: &'file_buffer str) -> bool {
+    pub fn check_query(&self, query: &Rc<String> ) -> bool {
         self.entries.check_query(query)
     }
 
@@ -55,7 +57,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         // println!("-------------------------------------------");
     }
 
-    pub fn get_result(&mut self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
+    pub fn get_result(&mut self, query: &Rc<String> ) -> Option<&Vec<SearchResult<'file_buffer>>> {
         let result: Option<&Vec<SearchResult<'file_buffer>>> = self.entries.get_query_value(query);
 
         if DEVELOPMENT {
@@ -65,7 +67,7 @@ impl<'file_buffer> Cache<'file_buffer> {
         result
     }
 
-    pub fn insert_entry(&mut self, entry_result: Vec<SearchResult<'file_buffer>>, query: String) {
+    pub fn insert_entry(&mut self, entry_result: Vec<SearchResult<'file_buffer>>, query: Rc<String>) {
         let node_index: usize = self.lru_nodes.get_current_index();
 
         self.entries
@@ -74,14 +76,14 @@ impl<'file_buffer> Cache<'file_buffer> {
         self.insert_new_node(query);
     }
 
-    pub fn insert_new_node(&mut self, query: String) {
+    pub fn insert_new_node(&mut self, query: Rc<String>) {
         let entry = self.entries.get_entry_ref(&query);
         if let Some(entry) = entry {
             self.lru_nodes.insert_new_node(query, entry.node_index);
         }
     }
 
-    pub fn update_nodes(&mut self, query: &str) {
+    pub fn update_nodes(&mut self, query: &Rc<String> ) {
         let entry = self.entries.get_entry_ref(query);
 
         self.lru_nodes.update_nodes_by_entry(entry);
@@ -98,9 +100,10 @@ impl<'file_buffer> Cache<'file_buffer> {
     }
 
     pub fn remove_tail(&mut self) {
-        let query = self.lru_nodes.remove_tail();
+        let query = self.lru_nodes.get_tail_query();
         if let Some(query) = query {
             self.entries.remove_entry(&query);
+            self.lru_nodes.remove_tail();
         }
     }
 

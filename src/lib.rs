@@ -5,7 +5,7 @@ mod log_searcher;
 mod lru_nodes_list;
 mod stateful_search_engine_errors;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc};
 
 use crate::{
     cache::Cache,
@@ -39,13 +39,15 @@ fn search_logic<'file_buffer, 'cache>(
     query: String,
     limit: Option<usize>,
 ) -> Result<(), AllErros> {
+    let query: Rc<String> = Rc::new(query);
+
     if cache.check_query(&query) {
         if DEVELOPMENT {
             println!("from cache");
         }
 
         cache.update_nodes(&query);
-        
+
         if DEVELOPMENT {
             cache.debugging_logs();
         }

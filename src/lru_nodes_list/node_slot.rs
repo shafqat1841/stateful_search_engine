@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::lru_nodes_list::{lru_node::LRUNode, prev_and_next::PrevAndNext};
 
 #[derive(Debug)]
@@ -7,7 +9,7 @@ pub enum NodeSlot {
 }
 
 impl NodeSlot {
-    pub fn new(query: String, prev: Option<usize>, next: Option<usize>) -> NodeSlot {
+    pub fn new(query: Rc<String>, prev: Option<usize>, next: Option<usize>) -> NodeSlot {
         let node = LRUNode::new(query, prev, next);
         NodeSlot::Occupied(node)
     }
@@ -50,7 +52,7 @@ impl NodeSlot {
         None
     }
 
-    pub fn get_key(&self) -> Option<String> {
+    pub fn get_key(&self) -> Option<Rc<String>> {
         if let NodeSlot::Occupied(node) = self {
             return Some(node.get_key());
         }
@@ -63,7 +65,7 @@ impl NodeSlot {
         }
     }
     
-    pub fn make_empty_occupied(&mut self, query: String) {
+    pub fn make_empty_occupied(&mut self, query: Rc<String>) {
         if let NodeSlot::Empty(p_n) = self {
             let new_self = self::NodeSlot::new(query, p_n.get_prev(), p_n.get_next());
             *self = new_self;

@@ -1,23 +1,23 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 pub use crate::{cache::cache_entries::CacheEntry, log_searcher::SearchResult};
 
 #[derive(Debug)]
 pub struct EntriesMap<'file_buffer> {
-    pub entries: HashMap<String, CacheEntry<'file_buffer>>,
+    pub entries: HashMap<Rc<String>, CacheEntry<'file_buffer>>,
 }
 
 impl<'file_buffer> EntriesMap<'file_buffer> {
     pub fn new() -> Self {
-        let entries: HashMap<String, CacheEntry<'file_buffer>> = HashMap::new();
+        let entries: HashMap<Rc<String>, CacheEntry<'file_buffer>> = HashMap::new();
         EntriesMap { entries }
     }
 
-    pub fn check_query(&self, query: &'file_buffer str) -> bool {
+    pub fn check_query(&self, query: &Rc<String>) -> bool {
         self.entries.contains_key(query)
     }
 
-    pub fn get_query_value(&self, query: &str) -> Option<&Vec<SearchResult<'file_buffer>>> {
+    pub fn get_query_value(&self, query: &Rc<String>) -> Option<&Vec<SearchResult<'file_buffer>>> {
         let result: Option<&Vec<SearchResult<'file_buffer>>> = match self.entries.get(query) {
             None => None,
             Some(val) => Some(&val.values),
@@ -38,17 +38,17 @@ impl<'file_buffer> EntriesMap<'file_buffer> {
     pub fn insert_entry(
         &mut self,
         entry_result: Vec<SearchResult<'file_buffer>>,
-        query: String,
+        query: Rc<String>,
         node_index: usize,
     ) {
         let cache_entry = self.create_cache_entry(entry_result, node_index);
 
-        let trimed_query = query.trim().to_string();
+        let trimed_query = query;
 
         self.entries.insert(trimed_query, cache_entry);
     }
 
-    pub fn get_entry_ref(&mut self, trimed_query: &str) -> Option<&CacheEntry<'_>> {
+    pub fn get_entry_ref(&mut self, trimed_query: &Rc<String>) -> Option<&CacheEntry<'_>> {
         let entry = self.entries.get(trimed_query);
         entry
     }
@@ -58,7 +58,7 @@ impl<'file_buffer> EntriesMap<'file_buffer> {
         res
     }
 
-    pub fn remove_entry(&mut self,query: &String) {
+    pub fn remove_entry(&mut self,query: &Rc<String>) {
         self.entries.remove(query);
     }
 }
